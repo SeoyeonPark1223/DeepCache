@@ -5,7 +5,20 @@
 - Used a Kaggle Notebook with a P100 GPU accelerator
 - Dataset: `mediSynDataset_x2_O3488.csv`
 
-## 1. Load Data & Feature Engineering
+## 1. Load Data & Split Data 
+- To align with the paper's goal which is predicting the future characteristics of an object based on past logs, we split the dataset into 60% for training and 40% for evaluation.
+
+- Create Sequences using sliding window
+
+    ``` text
+    Train X shape: (717236, 20, 1)
+    Train y shape: (717236, 26, 1)
+    Test X shape: (245091, 20, 1)
+    Test y shape: (245091, 26, 1)
+    ```
+
+
+## 2. Feature Engineering
 
 > "The probability $o^i$  is the normalized frequency of that object in an hour.”
 > 
@@ -14,32 +27,24 @@
 3. Normalize each row to obtain the request probability distribution for all objects at each hour
 
 ```python
-df['hour'] = df['request_time'] // 3600  # Add 'hour' column 
+# Create 'hour' column
+train_df['hour'] = train_df['request_time'] // 3600
+test_df['hour'] = test_df['request_time'] // 3600
 
+# Unique object list (shared across both sets)
 object_ids = df['object_ID'].unique()
 object_ids.sort()
-num_objects = len(object_ids) # Num unique objects: 50
 
-# Create pivot table: (hour, object_ID) → request count
-pivot = df.groupby(['hour', 'object_ID']).size().unstack(fill_value=0)
-pivot = pivot.reindex(columns=object_ids, fill_value=0)  # Ensure consistent object ordering
+# Pivot (hour, object) → count table
+train_pivot = train_df.groupby(['hour', 'object_ID']).size().unstack(fill_value=0)
+train_pivot = train_pivot.reindex(columns=object_ids, fill_value=0)
 
-# Normalize each row into a probability distribution
-probs = pivot.div(pivot.sum(axis=1), axis=0).fillna(0)
-```
+test_pivot = test_df.groupby(['hour', 'object_ID']).size().unstack(fill_value=0)
+test_pivot = test_pivot.reindex(columns=object_ids, fill_value=0)
 
-## 2. Split Data & Create Sequence
-
-- To align with the paper's goal which is predicting the future characteristics of an object based on past logs, we split the dataset into 60% for training and 40% for evaluation.
-- In this case, we split the `probs` into `train_probs` and `test_probs`
-
-- Create Sequences using sliding window
-
-```
-Train X shape: (585672, 20, 1)
-Train y shape: (585672, 26, 1)
-Test X shape: (375594, 20, 1)
-Test y shape: (375594, 26, 1)
+# Normalize
+train_probs = train_pivot.div(train_pivot.sum(axis=1), axis=0).fillna(0)
+test_probs = test_pivot.div(test_pivot.sum(axis=1), axis=0).fillna(0)
 ```
 
 ## 3. Build LSTM Model
@@ -88,11 +93,11 @@ Test y shape: (375594, 26, 1)
 model = build_seq2seq_model(m, k)
 model.fit(X_train, y_train, epochs=30, batch_size=64)
 
-loss, mae = model.evaluate(X_test, y_test)
-
 # Predict
 y_pred = model.predict(X_test)
 ```
+- Evaluate model
+![Eval](../readme-src/dataset2-eval.png)
 
 ## 5. **Cache Policy Setting**
 
@@ -151,7 +156,7 @@ for t, req in enumerate(actual_requests):
 > 
 
 ```
-DeepCache cache hit ratio: 0.3373
+DeepCache cache hit ratio: 0.3216
 Traditional LRU cache hit ratio: 0.29
 ```
 

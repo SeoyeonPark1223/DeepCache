@@ -196,3 +196,27 @@ LSTM Encoder-Decoder Model used in Deepcache framework
 
 - Show the ability of LSTM based models to predict the popularity of content objects
 - Results show that enabling Deepcache with existing cache replacement algorithm such as LRU, k-LRU significantly outperforms algorithms without it
+
+---
+## Result Comparison
+### Paper
+
+- Dataset1 cache size: 5
+- Dataset2 cache size: 150
+
+![paper result](./readme-src/paper-result.png)
+
+## Our Experiment
+
+- Dataset1 cache size: 6
+- Dataset2 cache size: 150
+
+![experiment result](./readme-src/experiment-result.png)
+
+- Dataset 1
+    
+    ![eval 1](./readme-src/dataset1-eval.png)
+    
+- Dataset 2
+    
+    ![dataset2-eval](./readme-src/dataset2-eval.png)

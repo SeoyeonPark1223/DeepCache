@@ -16,35 +16,37 @@
 - Using step=1 generated too much data, so we used step=100 to make it manageable.
 
 ```python
-window_size = 1000 # Window of past 1K objects
-step = 100 # Managable step
-m, k = 20, 10 # Sequence length for input(m) and output(k)
-
 # Generate training data for sequence-to-sequence modeling from object request logs
-for i in range(0, len(train_df) - window_size * (m + k), step):
-    seq = train_df['object_ID'].iloc[i : i + window_size * (m + k)]
-    x_seq, y_seq = [], []
-    
-    # Build the input sequence: m windows of past requests
-    for j in range(m):
-        window = seq[j * window_size : (j + 1) * window_size]
-        counts = window.value_counts(normalize=True).reindex(object_ids, fill_value=0).values
-        x_seq.append(counts)
-        
-    # Build the output sequence: k windows of future requests
-    for j in range(k):
-        window = seq[(m + j) * window_size : (m + j + 1) * window_size]
-        counts = window.value_counts(normalize=True).reindex(object_ids, fill_value=0).values
-        y_seq.append(counts)
+def build_sequence_input(df, object_ids, m, k, window_size=1000, step=100):
+    X, y = [], []
+    for i in range(0, len(df) - window_size * (m + k), step):
+        seq = df['object_ID'].iloc[i : i + window_size * (m + k)]
+        x_seq, y_seq = [], []
 
-    X.append(x_seq) # (#samples, 20, d)
-    y.append(y_seq) # (#samples, 26, d)
+        # Build the input sequence: m windows of past requests
+        for j in range(m):
+            window = seq[j * window_size : (j + 1) * window_size]
+            counts = window.value_counts(normalize=True).reindex(object_ids, fill_value=0).values
+            x_seq.append(counts)
+
+        # Build the output sequence: k windows of future requests
+        for j in range(k):
+            window = seq[(m + j) * window_size : (m + j + 1) * window_size]
+            counts = window.value_counts(normalize=True).reindex(object_ids, fill_value=0).values
+            y_seq.append(counts)
+
+        X.append(x_seq)
+        y.append(y_seq)
 ```
 
 - Stored the result as `npy` file → `X_dataset1_window.npy`, `y_dataset1_window.npy`
 - Result
-    - X: (samples * num_objects, m, 1) → (72650, 20, 1)
-    - y: (samples * num_objects, k, 1) →  (72650, 10, 1)
+    ```text
+    X_train.shape: (72650, 20, 1)
+    y_train.shape: (72650, 10, 1)
+    X_test.shape: (43450, 20, 1)
+    y_test.shape: (43450, 10, 1)
+    ```
 
 ## 3. Build LSTM Model
 
@@ -93,6 +95,8 @@ model.fit(X, y, epochs=30, batch_size=batch_size)
 
 y_pred = model.predict(X)  
 ```
+- Evaluate Model
+![eval](../readme-src/dataset1-eval.png)
 
 ## 5. **Cache Policy Setting**
 
