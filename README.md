@@ -7,9 +7,6 @@
 - Dataset1: [SyntheticDataset](https://www.kaggle.com/datasets/trispark/deep-cache-dataset)
 - Dataset2: [MediSynDataset](https://www.kaggle.com/datasets/kjiyunl/deep-cache-dataset2)
 
-## Presentation
-- Youtube Link: [Deep Cache](https://www.youtube.com/watch?v=brpeLnH7wxI)
-
 <br>
 
 # Paper Review
