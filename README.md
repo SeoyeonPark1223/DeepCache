@@ -209,7 +209,7 @@ LSTM Encoder-Decoder Model used in Deepcache framework
 
 ![paper result](./readme-src/paper-result.png)
 
-## Our Experiment
+## Experiment
 
 - Dataset1 cache size: 6
 - Dataset2 cache size: 150
